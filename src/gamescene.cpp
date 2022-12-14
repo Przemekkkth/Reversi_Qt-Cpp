@@ -14,15 +14,19 @@
 #include "fontmanager.h"
 
 bool KeyStatus::s_keyPressed = false;
+QPoint MouseStatus::s_releasedPoint = QPoint(-1, -1);
 
 GameScene::GameScene(QObject *parent)
-    : QGraphicsScene(parent)
+    : QGraphicsScene(parent),
+      m_mode(GameMode::Turn)
 {
     m_bgPixmap    = PixmapManager::Instance()->getPixmap(PixmapManager::TextureID::BG).scaled(SCREEN::PHYSICAL_SIZE, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
     m_boardPixmap = PixmapManager::Instance()->getPixmap(PixmapManager::TextureID::Board).scaled(GAME::BOARDWIDTH *
                                                                                                  GAME::SPACESIZE, GAME::BOARDHEIGHT * GAME::SPACESIZE);
-    drawBG();
+
     resetBoard();
+
+    drawBG();
     drawBoard();
     enterPlayerTile();
 
@@ -47,6 +51,37 @@ void GameScene::loop()
     if( m_loopTime > m_loopSpeed)
     {
         m_loopTime -= m_loopSpeed;
+
+        if(m_mode == GameMode::Turn)
+        {
+            clear();
+            drawBG();
+            drawBoard();
+            QPair<QString, QString> tilePair = enterPlayerTile();
+            m_playerTile = tilePair.first;
+            m_computerTile = tilePair.second;
+            if(rand()%2)
+            {
+               m_turn = GAME::PLAYER;
+            }
+            else
+            {
+                m_turn = GAME::COMPUTER;
+            }
+
+            if(m_playerTile != QString() || m_computerTile != QString())
+            {
+                qDebug() << "Player: " << m_playerTile << " Computer: " << m_computerTile;
+                qDebug() << "turn" << m_turn;
+                m_mode = GameMode::Game;
+            }
+
+        }
+        else{
+            clear();
+            drawBG();
+            drawBoard();
+        }
 
         handlePlayerInput();
         resetStatus();
@@ -177,7 +212,7 @@ QPair<QString, QString> GameScene::enterPlayerTile()
     tItem0->setText("Do you want to be white or black?");
     tItem0->setPen(QColor(GAME::TEXTCOLOR));
     tItem0->setBrush(QColor(GAME::TEXTCOLOR));
-    tItem0->setPos(SCREEN::HALF_WIDTH-tItem0->boundingRect().width()/2,
+    tItem0->setPos(SCREEN::HALF_WIDTH-tItem0->boundingRect().width()/1.5f,
                   SCREEN::HALF_HEIGHT-tItem0->boundingRect().height()/2);
     tItem0->setFont(FontManager::Instance()->getFont(FontManager::FontID::FONT));
 
@@ -193,7 +228,7 @@ QPair<QString, QString> GameScene::enterPlayerTile()
     tItem1->setText("White");
     tItem1->setPen(QColor(GAME::TEXTCOLOR));
     tItem1->setBrush(QColor(GAME::TEXTCOLOR));
-    tItem1->setPos(SCREEN::HALF_WIDTH-tItem1->boundingRect().width()/2 - 60,
+    tItem1->setPos(SCREEN::HALF_WIDTH-tItem1->boundingRect().width()/1.5f - 60,
                   SCREEN::HALF_HEIGHT-tItem1->boundingRect().height()/2 + 40);
     tItem1->setFont(FontManager::Instance()->getFont(FontManager::FontID::BIGFONT));
     QGraphicsRectItem* rItem1 = new QGraphicsRectItem();
@@ -208,7 +243,7 @@ QPair<QString, QString> GameScene::enterPlayerTile()
     tItem2->setText("Black");
     tItem2->setPen(QColor(GAME::TEXTCOLOR));
     tItem2->setBrush(QColor(GAME::TEXTCOLOR));
-    tItem2->setPos(SCREEN::HALF_WIDTH-tItem2->boundingRect().width()/2 + 60,
+    tItem2->setPos(SCREEN::HALF_WIDTH-tItem2->boundingRect().width()/1.5f + 60,
                    SCREEN::HALF_HEIGHT-tItem2->boundingRect().height()/2 + 40);
     tItem2->setFont(FontManager::Instance()->getFont(FontManager::FontID::BIGFONT));
     QGraphicsRectItem* rItem2 = new QGraphicsRectItem();
@@ -218,8 +253,33 @@ QPair<QString, QString> GameScene::enterPlayerTile()
     rItem2->setBrush(QColor(GAME::TEXTBGCOLOR1));
     addItem(rItem2);
     addItem(tItem2);
-
+/////////////////////////////////////////////////
+    if( MouseStatus::s_releasedPoint.x() > rItem1->x() &&
+        MouseStatus::s_releasedPoint.x() < rItem1->x()+rItem1->boundingRect().width() &&
+        MouseStatus::s_releasedPoint.y() > rItem1->y() &&
+        MouseStatus::s_releasedPoint.y() < rItem1->y()+rItem1->boundingRect().height() )
+    {
+        QPair<QString, QString> pair;
+        pair.first = GAME::WHITE_TILE;
+        pair.second = GAME::BLACK_TILE;
+        return pair;
+    }
+    else if(MouseStatus::s_releasedPoint.x() > tItem2->x() &&
+            MouseStatus::s_releasedPoint.x() < tItem2->x()+tItem2->boundingRect().width() &&
+            MouseStatus::s_releasedPoint.y() > tItem2->y() &&
+            MouseStatus::s_releasedPoint.y() < tItem2->y()+tItem2->boundingRect().height())
+    {
+        QPair<QString, QString> pair;
+        pair.first = GAME::BLACK_TILE;
+        pair.second = GAME::WHITE_TILE;
+        return pair;
+    }
     return QPair<QString, QString>();
+}
+
+bool GameScene::isValidMove(QString tile, int xstart, int ystart)
+{
+
 }
 
 void GameScene::keyPressEvent(QKeyEvent *event)
@@ -266,6 +326,7 @@ void GameScene::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
 {
     m_mouse->m_x = event->scenePos().x();
     m_mouse->m_y = event->scenePos().y();
+    MouseStatus::s_releasedPoint = event->scenePos().toPoint();
     m_mouse->m_pressed = false;
     m_mouse->m_released = true;
     QGraphicsScene::mouseReleaseEvent(event);

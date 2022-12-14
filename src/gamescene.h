@@ -23,6 +23,7 @@ struct MouseStatus
     float m_y = 0.0f;
     bool m_released = false;
     bool m_pressed = false;
+    static QPoint s_releasedPoint;
 };
 
 
@@ -30,6 +31,9 @@ class GameScene : public QGraphicsScene
 {
     Q_OBJECT
 public:
+    enum GameMode{
+        Turn, Game, Again
+    };
     explicit GameScene(QObject *parent = nullptr);
 
 signals:
@@ -47,8 +51,12 @@ private:
     bool isOnBoard(int x, int y);
     QPoint translateBoardToPixelCoord(int x, int y);
     QPair<QString, QString> enterPlayerTile();
+    bool isValidMove(QString tile, int xstart, int ystart);
     QPixmap m_bgPixmap, m_boardPixmap;
     QString m_board[GAME::BOARDWIDTH][GAME::BOARDHEIGHT];
+    QString m_playerTile, m_computerTile;
+    QString m_turn;
+    GameMode m_mode;
 
     KeyStatus* m_keys[256];
     MouseStatus* m_mouse;

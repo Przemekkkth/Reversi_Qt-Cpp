@@ -143,6 +143,8 @@ namespace GAME
     static const QString BLACK_TILE           = "BLACK_TILE";
     static const QString HINT_TILE            = "HINT_TILE";
     static const QString EMPTY_TILE           = "EMPTY_TILE";
+    static const QString PLAYER               = "PLAYER";
+    static const QString COMPUTER             = "COMPUTER";
 }
 
 #endif // UTILS_H
