@@ -78,9 +78,18 @@ void GameScene::loop()
 
         }
         else{
+            if(m_turn == GAME::PLAYER)
+            {
+                if(getValidMoves(m_playerTile).isEmpty())
+                {
+                    m_mode = GameMode::Again;
+                }
+            }
+
             clear();
             drawBG();
             drawBoard();
+            drawNewGameAndHintText();
         }
 
         handlePlayerInput();
@@ -177,6 +186,42 @@ void GameScene::drawBoard()
             }
         }
     }
+}
+
+void GameScene::drawNewGameAndHintText()
+{
+    QGraphicsSimpleTextItem *tItem0 = new QGraphicsSimpleTextItem();
+    tItem0->setFont(FontManager::Instance()->getFont(FontManager::FontID::FONT));
+    tItem0->setPen(QColor(GAME::TEXTCOLOR));
+    tItem0->setBrush(QColor(GAME::TEXTCOLOR));
+    tItem0->setText("New Game");
+    tItem0->setPos(SCREEN::PHYSICAL_SIZE.width()-tItem0->boundingRect().width()-8,
+                   10);
+
+    QGraphicsRectItem *rItem0 = new QGraphicsRectItem();
+    rItem0->setPen(QColor(GAME::TEXTBGCOLOR2));
+    rItem0->setBrush(QColor(GAME::TEXTBGCOLOR2));
+    rItem0->setRect(tItem0->boundingRect());
+    rItem0->setPos(tItem0->pos());
+    addItem(rItem0);
+    addItem(tItem0);
+
+
+    QGraphicsSimpleTextItem *tItem1 = new QGraphicsSimpleTextItem();
+    tItem1->setFont(FontManager::Instance()->getFont(FontManager::FontID::FONT));
+    tItem1->setPen(QColor(GAME::TEXTCOLOR));
+    tItem1->setBrush(QColor(GAME::TEXTCOLOR));
+    tItem1->setText("Hints");
+    tItem1->setPos(SCREEN::PHYSICAL_SIZE.width()-tItem1->boundingRect().width()-8,
+                   50);
+
+    QGraphicsRectItem *rItem1 = new QGraphicsRectItem();
+    rItem1->setPen(QColor(GAME::TEXTBGCOLOR2));
+    rItem1->setBrush(QColor(GAME::TEXTBGCOLOR2));
+    rItem1->setRect(tItem1->boundingRect());
+    rItem1->setPos(tItem1->pos());
+    addItem(rItem1);
+    addItem(tItem1);
 }
 
 void GameScene::resetBoard()
@@ -279,7 +324,97 @@ QPair<QString, QString> GameScene::enterPlayerTile()
 
 bool GameScene::isValidMove(QString tile, int xstart, int ystart)
 {
+    if(m_board[xstart][ystart] != GAME::EMPTY_TILE || !isOnBoard(xstart, ystart))
+    {
+        return false;
+    }
 
+    m_board[xstart][ystart] = tile;
+    QString otherTile;
+    if(tile == GAME::WHITE_TILE)
+    {
+        otherTile = GAME::BLACK_TILE;
+    }
+    else
+    {
+        otherTile = GAME::WHITE_TILE;
+    }
+
+    QList<QPoint> tilesToFilp;
+    QList<QPoint> eightDirection;
+    eightDirection.push_back(QPoint(0,  1));
+    eightDirection.push_back(QPoint(1,  1));
+    eightDirection.push_back(QPoint(1,  0));
+    eightDirection.push_back(QPoint(1, -1));
+    eightDirection.push_back(QPoint(0, -1));
+    eightDirection.push_back(QPoint(-1,-1));
+    eightDirection.push_back(QPoint(-1, 0));
+    eightDirection.push_back(QPoint(-1, 1));
+
+    foreach(QPoint p, eightDirection)
+    {
+        int xdirection = p.x();
+        int ydirection = p.y();
+        int x = xstart;
+        int y = ystart;
+        if(isOnBoard(x, y) && m_board[x][y] == otherTile)
+        {
+            x += xdirection;
+            y += ydirection;
+            if(!isOnBoard(x, y))
+            {
+                continue;
+            }
+            while(m_board[x][y] == otherTile)
+            {
+                x += xdirection;
+                y += ydirection;
+                if(!isOnBoard(x, y))
+                {
+                    break;
+                }
+            }
+            if(!isOnBoard(x, y))
+            {
+                continue;
+            }
+            if(m_board[x][y] == tile)
+            {
+                while(true)
+                {
+                    x -= xdirection;
+                    y -= ydirection;
+                    if(x == xstart && y == ystart)
+                    {
+                         break;
+                    }
+                    tilesToFilp.append(QPoint(x,y));
+                }
+            }
+        }
+    }
+    m_board[xstart][ystart] = GAME::EMPTY_TILE;
+    if(!tilesToFilp.size())
+    {
+        return false;
+    }
+    return true;
+}
+
+QList<QPoint> GameScene::getValidMoves(QString tile)
+{
+    QList<QPoint> validMoves;
+    for(int x = 0; x < GAME::BOARDWIDTH; ++x)
+    {
+        for(int y = 0; y < GAME::BOARDHEIGHT; ++y)
+        {
+            if(isValidMove(tile, x, y))
+            {
+                validMoves.append(QPoint(x, y));
+            }
+        }
+    }
+    return validMoves;
 }
 
 void GameScene::keyPressEvent(QKeyEvent *event)

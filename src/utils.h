@@ -145,6 +145,7 @@ namespace GAME
     static const QString EMPTY_TILE           = "EMPTY_TILE";
     static const QString PLAYER               = "PLAYER";
     static const QString COMPUTER             = "COMPUTER";
+    static const QString NONE                 = "NONE";
 }
 
 #endif // UTILS_H

@@ -47,11 +47,14 @@ private:
 
     void drawBG();
     void drawBoard();
+    void drawNewGameAndHintText();
     void resetBoard();
     bool isOnBoard(int x, int y);
     QPoint translateBoardToPixelCoord(int x, int y);
     QPair<QString, QString> enterPlayerTile();
     bool isValidMove(QString tile, int xstart, int ystart);
+    QList<QPoint> getValidMoves(QString tile);
+
     QPixmap m_bgPixmap, m_boardPixmap;
     QString m_board[GAME::BOARDWIDTH][GAME::BOARDHEIGHT];
     QString m_playerTile, m_computerTile;
