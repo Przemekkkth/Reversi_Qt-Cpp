@@ -54,12 +54,15 @@ private:
     QPair<QString, QString> enterPlayerTile();
     bool isValidMove(QString tile, int xstart, int ystart);
     QList<QPoint> getValidMoves(QString tile);
+    void setBoardWithValidMoves(QString tile);
+    void removeHintTileFromBoard();
 
     QPixmap m_bgPixmap, m_boardPixmap;
     QString m_board[GAME::BOARDWIDTH][GAME::BOARDHEIGHT];
     QString m_playerTile, m_computerTile;
     QString m_turn;
     GameMode m_mode;
+    bool m_showHints;
 
     KeyStatus* m_keys[256];
     MouseStatus* m_mouse;

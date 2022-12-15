@@ -18,7 +18,8 @@ QPoint MouseStatus::s_releasedPoint = QPoint(-1, -1);
 
 GameScene::GameScene(QObject *parent)
     : QGraphicsScene(parent),
-      m_mode(GameMode::Turn)
+      m_mode(GameMode::Turn),
+      m_showHints(true)
 {
     m_bgPixmap    = PixmapManager::Instance()->getPixmap(PixmapManager::TextureID::BG).scaled(SCREEN::PHYSICAL_SIZE, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
     m_boardPixmap = PixmapManager::Instance()->getPixmap(PixmapManager::TextureID::Board).scaled(GAME::BOARDWIDTH *
@@ -69,6 +70,7 @@ void GameScene::loop()
                 m_turn = GAME::COMPUTER;
             }
 
+            m_turn = GAME::PLAYER;
             if(m_playerTile != QString() || m_computerTile != QString())
             {
                 qDebug() << "Player: " << m_playerTile << " Computer: " << m_computerTile;
@@ -84,6 +86,16 @@ void GameScene::loop()
                 {
                     m_mode = GameMode::Again;
                 }
+
+                if(m_showHints)
+                {
+                    setBoardWithValidMoves(m_playerTile);
+                }
+                else
+                {
+
+                }
+
             }
 
             clear();
@@ -357,6 +369,8 @@ bool GameScene::isValidMove(QString tile, int xstart, int ystart)
         int ydirection = p.y();
         int x = xstart;
         int y = ystart;
+        x += xdirection;
+        y += ydirection;
         if(isOnBoard(x, y) && m_board[x][y] == otherTile)
         {
             x += xdirection;
@@ -393,6 +407,7 @@ bool GameScene::isValidMove(QString tile, int xstart, int ystart)
             }
         }
     }
+
     m_board[xstart][ystart] = GAME::EMPTY_TILE;
     if(!tilesToFilp.size())
     {
@@ -414,7 +429,32 @@ QList<QPoint> GameScene::getValidMoves(QString tile)
             }
         }
     }
+       // exit(0);
     return validMoves;
+}
+
+void GameScene::setBoardWithValidMoves(QString tile)
+{
+    foreach(QPoint p, getValidMoves(tile))
+    {
+        int x = p.x();
+        int y = p.y();
+        m_board[x][y] = GAME::HINT_TILE;
+    }
+}
+
+void GameScene::removeHintTileFromBoard()
+{
+    for(int x = 0; x < GAME::BOARDWIDTH; ++x)
+    {
+        for(int y = 0; y < GAME::BOARDHEIGHT; ++y)
+        {
+            if(m_board[x][y] == GAME::HINT_TILE)
+            {
+                m_board[x][y] = GAME::EMPTY_TILE;
+            }
+        }
+    }
 }
 
 void GameScene::keyPressEvent(QKeyEvent *event)
