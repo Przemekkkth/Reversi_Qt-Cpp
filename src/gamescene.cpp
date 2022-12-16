@@ -93,7 +93,7 @@ void GameScene::loop()
                 }
                 else
                 {
-
+                    removeHintTileFromBoard();
                 }
 
             }
@@ -234,6 +234,16 @@ void GameScene::drawNewGameAndHintText()
     rItem1->setPos(tItem1->pos());
     addItem(rItem1);
     addItem(tItem1);
+
+///////////////////////////HINTS//////////////////////////////////////////////////////////
+    if( MouseStatus::s_releasedPoint.x() > rItem1->x() &&
+        MouseStatus::s_releasedPoint.x() < rItem1->x()+rItem1->boundingRect().width() &&
+        MouseStatus::s_releasedPoint.y() > rItem1->y() &&
+        MouseStatus::s_releasedPoint.y() < rItem1->y()+rItem1->boundingRect().height() )
+    {
+        MouseStatus::s_releasedPoint = QPoint(-1,-1);
+        m_showHints = !m_showHints;
+    }
 }
 
 void GameScene::resetBoard()
@@ -429,7 +439,6 @@ QList<QPoint> GameScene::getValidMoves(QString tile)
             }
         }
     }
-       // exit(0);
     return validMoves;
 }
 
