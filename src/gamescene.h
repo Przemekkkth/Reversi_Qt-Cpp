@@ -53,9 +53,12 @@ private:
     QPoint translateBoardToPixelCoord(int x, int y);
     QPair<QString, QString> enterPlayerTile();
     bool isValidMove(QString tile, int xstart, int ystart);
+    QList<QPoint> isValidMove(QString tile, int xstart, int ystart, bool on);
     QList<QPoint> getValidMoves(QString tile);
     void setBoardWithValidMoves(QString tile);
     void removeHintTileFromBoard();
+    QPoint getSpaceClicked();
+    bool makeMove(QString tile, int xstart, int ystart, bool realMove=false);
 
     QPixmap m_bgPixmap, m_boardPixmap;
     QString m_board[GAME::BOARDWIDTH][GAME::BOARDHEIGHT];

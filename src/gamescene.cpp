@@ -96,6 +96,14 @@ void GameScene::loop()
                     removeHintTileFromBoard();
                 }
 
+                QPoint p = getSpaceClicked();
+                if(p != QPoint(-1, -1) && isValidMove(m_playerTile, p.x(), p.y()))
+                {
+                   makeMove(m_playerTile, p.x(), p.y(), true);
+                   if(getValidMoves(m_computerTile).size()){
+                        m_turn = GAME::COMPUTER;
+                   }
+                }
             }
 
             clear();
@@ -426,6 +434,88 @@ bool GameScene::isValidMove(QString tile, int xstart, int ystart)
     return true;
 }
 
+QList<QPoint> GameScene::isValidMove(QString tile, int xstart, int ystart, bool on)
+{
+    if(m_board[xstart][ystart] != GAME::EMPTY_TILE || !isOnBoard(xstart, ystart))
+    {
+        return QList<QPoint>();
+    }
+
+    m_board[xstart][ystart] = tile;
+    QString otherTile;
+    if(tile == GAME::WHITE_TILE)
+    {
+        otherTile = GAME::BLACK_TILE;
+    }
+    else
+    {
+        otherTile = GAME::WHITE_TILE;
+    }
+
+    QList<QPoint> tilesToFilp;
+    QList<QPoint> eightDirection;
+    eightDirection.push_back(QPoint(0,  1));
+    eightDirection.push_back(QPoint(1,  1));
+    eightDirection.push_back(QPoint(1,  0));
+    eightDirection.push_back(QPoint(1, -1));
+    eightDirection.push_back(QPoint(0, -1));
+    eightDirection.push_back(QPoint(-1,-1));
+    eightDirection.push_back(QPoint(-1, 0));
+    eightDirection.push_back(QPoint(-1, 1));
+
+    foreach(QPoint p, eightDirection)
+    {
+        int xdirection = p.x();
+        int ydirection = p.y();
+        int x = xstart;
+        int y = ystart;
+        x += xdirection;
+        y += ydirection;
+        if(isOnBoard(x, y) && m_board[x][y] == otherTile)
+        {
+            x += xdirection;
+            y += ydirection;
+            if(!isOnBoard(x, y))
+            {
+                continue;
+            }
+            while(m_board[x][y] == otherTile)
+            {
+                x += xdirection;
+                y += ydirection;
+                if(!isOnBoard(x, y))
+                {
+                    break;
+                }
+            }
+            if(!isOnBoard(x, y))
+            {
+                continue;
+            }
+            if(m_board[x][y] == tile)
+            {
+                while(true)
+                {
+                    x -= xdirection;
+                    y -= ydirection;
+                    if(x == xstart && y == ystart)
+                    {
+                         break;
+                    }
+                    tilesToFilp.append(QPoint(x,y));
+                }
+            }
+        }
+    }
+
+    m_board[xstart][ystart] = GAME::EMPTY_TILE;
+    if(!tilesToFilp.size())
+    {
+        return QList<QPoint>();
+    }
+    return tilesToFilp;
+}
+
 QList<QPoint> GameScene::getValidMoves(QString tile)
 {
     QList<QPoint> validMoves;
@@ -466,6 +556,48 @@ void GameScene::removeHintTileFromBoard()
     }
 }
 
+QPoint GameScene::getSpaceClicked()
+{
+    for(int x = 0; x < GAME::BOARDWIDTH; ++x)
+    {
+        for(int y = 0; y < GAME::BOARDHEIGHT; ++y)
+        {
+            if(MouseStatus::s_releasedPoint.x() > x*GAME::SPACESIZE + GAME::XMARGIN &&
+               MouseStatus::s_releasedPoint.x() < (x + 1)*GAME::SPACESIZE + GAME::XMARGIN &&
+               MouseStatus::s_releasedPoint.y() > y*GAME::SPACESIZE + GAME::YMARGIN &&
+               MouseStatus::s_releasedPoint.y() < (y + 1)*GAME::SPACESIZE + GAME::YMARGIN)
+            {
+                return QPoint(x,y);
+            }
+        }
+    }
+    return QPoint(-1,-1);
+}
+
+bool GameScene::makeMove(QString tile, int xstart, int ystart, bool realMove)
+{
+    QList<QPoint> tilesToFlip = isValidMove(tile, xstart, ystart, true);
+
+    if (tilesToFlip.isEmpty())
+    {
+        return false;
+    }
+
+    m_board[xstart][ystart] = tile;
+
+    if( realMove )
+    {
+       // animateTileChange(tilesToFlip, tile, (xstart, ystart))
+    }
+
+    foreach(QPoint p, tilesToFlip)
+    {
+        m_board[p.x()][p.y()] = tile;
+    }
+
+    return true;
+}
+
 void GameScene::keyPressEvent(QKeyEvent *event)
 {
     if(KEYBOARD::KeysMapper.contains(event->key()))
@@ -503,6 +635,7 @@ void GameScene::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
 {
     m_mouse->m_x = event->scenePos().x();
     m_mouse->m_y = event->scenePos().y();
+    MouseStatus::s_releasedPoint = QPoint(-1, -1);
     QGraphicsScene::mouseMoveEvent(event);
 }
 
