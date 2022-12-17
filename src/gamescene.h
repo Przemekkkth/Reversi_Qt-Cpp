@@ -48,6 +48,7 @@ private:
     void drawBG();
     void drawBoard();
     void drawNewGameAndHintText();
+    void drawInfo();
     void resetBoard();
     bool isOnBoard(int x, int y);
     QPoint translateBoardToPixelCoord(int x, int y);

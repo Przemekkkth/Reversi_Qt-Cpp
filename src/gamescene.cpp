@@ -9,6 +9,7 @@
 #include <QPainter>
 #include <QDir>
 #include <QGraphicsLineItem>
+#include <QThread>
 #include "utils.h"
 #include "pixmapmanager.h"
 #include "fontmanager.h"
@@ -79,7 +80,8 @@ void GameScene::loop()
             }
 
         }
-        else{
+        else
+        {
             if(m_turn == GAME::PLAYER)
             {
                 if(getValidMoves(m_playerTile).isEmpty())
@@ -112,6 +114,8 @@ void GameScene::loop()
                     m_mode = GameMode::Again;
                 }
                 //TIME
+                QThread::sleep(1);
+
                 QPoint bestMove = getComputerMove(m_computerTile);
                 makeMove(m_computerTile, bestMove.x(), bestMove.y(), true);
                 if(getValidMoves(m_playerTile).size()){
@@ -121,6 +125,7 @@ void GameScene::loop()
             clear();
             drawBG();
             drawBoard();
+            drawInfo();
             drawNewGameAndHintText();
         }
 
@@ -266,6 +271,21 @@ void GameScene::drawNewGameAndHintText()
     }
 }
 
+void GameScene::drawInfo()
+{
+    QMap<QString, int> scoreMap = getScoreOfBoard(m_board);
+    int computerScore = scoreMap[m_computerTile];
+    int playerScore   = scoreMap[m_playerTile];
+    QString textToRender = "Player Score: " + QString::number(playerScore) + " Computer Score " + QString::number(computerScore) + " Turn " + m_turn;
+    QGraphicsSimpleTextItem* tItem = new QGraphicsSimpleTextItem();
+    tItem->setFont(FontManager::Instance()->getFont(FontManager::FontID::FONT));
+    tItem->setText(textToRender);
+    tItem->setPen(QColor(GAME::TEXTCOLOR));
+    tItem->setBrush(QColor(GAME::TEXTCOLOR));
+    tItem->setPos(10, SCREEN::PHYSICAL_SIZE.height()-tItem->boundingRect().height());
+    addItem(tItem);
+}
+
 void GameScene::resetBoard()
 {
     for(int x = 0; x < GAME::BOARDWIDTH; ++x)
@@ -366,84 +386,7 @@ QPair<QString, QString> GameScene::enterPlayerTile()
 
 bool GameScene::isValidMove(QString tile, int xstart, int ystart)
 {
-    if(m_board[xstart][ystart] != GAME::EMPTY_TILE || !isOnBoard(xstart, ystart))
-    {
-        return false;
-    }
-
-    m_board[xstart][ystart] = tile;
-    QString otherTile;
-    if(tile == GAME::WHITE_TILE)
-    {
-        otherTile = GAME::BLACK_TILE;
-    }
-    else
-    {
-        otherTile = GAME::WHITE_TILE;
-    }
-
-    QList<QPoint> tilesToFilp;
-    QList<QPoint> eightDirection;
-    eightDirection.push_back(QPoint(0,  1));
-    eightDirection.push_back(QPoint(1,  1));
-    eightDirection.push_back(QPoint(1,  0));
-    eightDirection.push_back(QPoint(1, -1));
-    eightDirection.push_back(QPoint(0, -1));
-    eightDirection.push_back(QPoint(-1,-1));
-    eightDirection.push_back(QPoint(-1, 0));
-    eightDirection.push_back(QPoint(-1, 1));
-
-    foreach(QPoint p, eightDirection)
-    {
-        int xdirection = p.x();
-        int ydirection = p.y();
-        int x = xstart;
-        int y = ystart;
-        x += xdirection;
-        y += ydirection;
-        if(isOnBoard(x, y) && m_board[x][y] == otherTile)
-        {
-            x += xdirection;
-            y += ydirection;
-            if(!isOnBoard(x, y))
-            {
-                continue;
-            }
-            while(m_board[x][y] == otherTile)
-            {
-                x += xdirection;
-                y += ydirection;
-                if(!isOnBoard(x, y))
-                {
-                    break;
-                }
-            }
-            if(!isOnBoard(x, y))
-            {
-                continue;
-            }
-            if(m_board[x][y] == tile)
-            {
-                while(true)
-                {
-                    x -= xdirection;
-                    y -= ydirection;
-                    if(x == xstart && y == ystart)
-                    {
-                        break;
-                    }
-                    tilesToFilp.append(QPoint(x,y));
-                }
-            }
-        }
-    }
-
-    m_board[xstart][ystart] = GAME::EMPTY_TILE;
-    if(!tilesToFilp.size())
-    {
-        return false;
-    }
-    return true;
+    return isValidMove(m_board, tile, xstart, ystart);
 }
 
 bool GameScene::isValidMove(QString dupeBoard[GAME::BOARDWIDTH][GAME::BOARDHEIGHT], QString tile, int xstart, int ystart)
@@ -530,84 +473,7 @@ bool GameScene::isValidMove(QString dupeBoard[GAME::BOARDWIDTH][GAME::BOARDHEIGH
 
 QList<QPoint> GameScene::isValidMove(QString tile, int xstart, int ystart, bool on)
 {
-    if(m_board[xstart][ystart] != GAME::EMPTY_TILE || !isOnBoard(xstart, ystart))
-    {
-        return QList<QPoint>();
-    }
-
-    m_board[xstart][ystart] = tile;
-    QString otherTile;
-    if(tile == GAME::WHITE_TILE)
-    {
-        otherTile = GAME::BLACK_TILE;
-    }
-    else
-    {
-        otherTile = GAME::WHITE_TILE;
-    }
-
-    QList<QPoint> tilesToFilp;
-    QList<QPoint> eightDirection;
-    eightDirection.push_back(QPoint(0,  1));
-    eightDirection.push_back(QPoint(1,  1));
-    eightDirection.push_back(QPoint(1,  0));
-    eightDirection.push_back(QPoint(1, -1));
-    eightDirection.push_back(QPoint(0, -1));
-    eightDirection.push_back(QPoint(-1,-1));
-    eightDirection.push_back(QPoint(-1, 0));
-    eightDirection.push_back(QPoint(-1, 1));
-
-    foreach(QPoint p, eightDirection)
-    {
-        int xdirection = p.x();
-        int ydirection = p.y();
-        int x = xstart;
-        int y = ystart;
-        x += xdirection;
-        y += ydirection;
-        if(isOnBoard(x, y) && m_board[x][y] == otherTile)
-        {
-            x += xdirection;
-            y += ydirection;
-            if(!isOnBoard(x, y))
-            {
-                continue;
-            }
-            while(m_board[x][y] == otherTile)
-            {
-                x += xdirection;
-                y += ydirection;
-                if(!isOnBoard(x, y))
-                {
-                    break;
-                }
-            }
-            if(!isOnBoard(x, y))
-            {
-                continue;
-            }
-            if(m_board[x][y] == tile)
-            {
-                while(true)
-                {
-                    x -= xdirection;
-                    y -= ydirection;
-                    if(x == xstart && y == ystart)
-                    {
-                        break;
-                    }
-                    tilesToFilp.append(QPoint(x,y));
-                }
-            }
-        }
-    }
-
-    m_board[xstart][ystart] = GAME::EMPTY_TILE;
-    if(!tilesToFilp.size())
-    {
-        return QList<QPoint>();
-    }
-    return tilesToFilp;
+    return isValidMove(m_board, tile, xstart, ystart, on);
 }
 
 QList<QPoint> GameScene::isValidMove(QString dupeBoard[GAME::BOARDWIDTH][GAME::BOARDHEIGHT], QString tile, int xstart, int ystart, bool on)
@@ -752,26 +618,7 @@ QPoint GameScene::getSpaceClicked()
 
 bool GameScene::makeMove(QString tile, int xstart, int ystart, bool realMove)
 {
-    QList<QPoint> tilesToFlip = isValidMove(tile, xstart, ystart, true);
-
-    if (tilesToFlip.isEmpty())
-    {
-        return false;
-    }
-
-    m_board[xstart][ystart] = tile;
-
-    if( realMove )
-    {
-        // animateTileChange(tilesToFlip, tile, (xstart, ystart))
-    }
-
-    foreach(QPoint p, tilesToFlip)
-    {
-        m_board[p.x()][p.y()] = tile;
-    }
-
-    return true;
+    return makeMove(m_board, tile, xstart, ystart, realMove);
 }
 
 bool GameScene::makeMove(QString dupeBoard[GAME::BOARDWIDTH][GAME::BOARDHEIGHT], QString tile, int xstart, int ystart, bool realMove)
