@@ -1,4 +1,5 @@
 #include "gamescene.h"
+#include <QApplication>
 #include <QKeyEvent>
 #include <QGraphicsSceneMouseEvent>
 #include <QGraphicsPixmapItem>
@@ -20,7 +21,7 @@ QPoint MouseStatus::s_releasedPoint = QPoint(-1, -1);
 GameScene::GameScene(QObject *parent)
     : QGraphicsScene(parent),
       m_mode(GameMode::Turn),
-      m_showHints(true)
+      m_showHints(false)
 {
     m_bgPixmap    = PixmapManager::Instance()->getPixmap(PixmapManager::TextureID::BG).scaled(SCREEN::PHYSICAL_SIZE, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
     m_boardPixmap = PixmapManager::Instance()->getPixmap(PixmapManager::TextureID::Board).scaled(GAME::BOARDWIDTH *
@@ -74,29 +75,29 @@ void GameScene::loop()
             m_turn = GAME::PLAYER;
             if(m_playerTile != QString() || m_computerTile != QString())
             {
-                qDebug() << "Player: " << m_playerTile << " Computer: " << m_computerTile;
-                qDebug() << "turn" << m_turn;
+                MouseStatus::s_releasedPoint = QPoint(-1, -1);
                 m_mode = GameMode::Game;
             }
 
         }
-        else
+        else if(m_mode == GameMode::Game)
         {
+            if(m_showHints)
+            {
+                setBoardWithValidMoves(m_playerTile);
+            }
+            else
+            {
+                removeHintTileFromBoard();
+            }
             if(m_turn == GAME::PLAYER)
             {
-                if(getValidMoves(m_playerTile).isEmpty())
+                if(getValidMoves(m_playerTile).isEmpty() && !m_showHints)
                 {
                     m_mode = GameMode::Again;
                 }
 
-                if(m_showHints)
-                {
-                    setBoardWithValidMoves(m_playerTile);
-                }
-                else
-                {
-                    removeHintTileFromBoard();
-                }
+
 
                 QPoint p = getSpaceClicked();
                 if(p != QPoint(-1, -1) && isValidMove(m_playerTile, p.x(), p.y()))
@@ -109,7 +110,7 @@ void GameScene::loop()
             }
             else if(m_turn == GAME::COMPUTER)
             {
-                if(getValidMoves(m_computerTile).isEmpty())
+                if(getValidMoves(m_computerTile).isEmpty() && !m_showHints)
                 {
                     m_mode = GameMode::Again;
                 }
@@ -128,7 +129,13 @@ void GameScene::loop()
             drawInfo();
             drawNewGameAndHintText();
         }
-
+        else if(m_mode == GameMode::Again)
+        {
+            clear();
+            drawBG();
+            drawBoard();
+            drawFinalScore();
+        }
         handlePlayerInput();
         resetStatus();
     }
@@ -253,13 +260,31 @@ void GameScene::drawNewGameAndHintText()
                    50);
 
     QGraphicsRectItem *rItem1 = new QGraphicsRectItem();
-    rItem1->setPen(QColor(GAME::TEXTBGCOLOR2));
-    rItem1->setBrush(QColor(GAME::TEXTBGCOLOR2));
+    if(m_showHints)
+    {
+        rItem1->setPen(QColor(GAME::TEXTBGCOLOR2));
+        rItem1->setBrush(QColor(GAME::TEXTBGCOLOR2));
+    }
+    else
+    {
+        rItem1->setPen(QColor(Qt::red));
+        rItem1->setBrush(QColor(Qt::red));
+    }
+
     rItem1->setRect(tItem1->boundingRect());
     rItem1->setPos(tItem1->pos());
     addItem(rItem1);
     addItem(tItem1);
 
+
+    ///////////////////////////New Game//////////////////////////////////////////////////////////
+    if( MouseStatus::s_releasedPoint.x() > rItem0->x() &&
+            MouseStatus::s_releasedPoint.x() < rItem0->x()+rItem0->boundingRect().width() &&
+            MouseStatus::s_releasedPoint.y() > rItem0->y() &&
+            MouseStatus::s_releasedPoint.y() < rItem0->y()+rItem1->boundingRect().height() )
+    {
+        newGame();
+    }
     ///////////////////////////HINTS//////////////////////////////////////////////////////////
     if( MouseStatus::s_releasedPoint.x() > rItem1->x() &&
             MouseStatus::s_releasedPoint.x() < rItem1->x()+rItem1->boundingRect().width() &&
@@ -284,6 +309,109 @@ void GameScene::drawInfo()
     tItem->setBrush(QColor(GAME::TEXTCOLOR));
     tItem->setPos(10, SCREEN::PHYSICAL_SIZE.height()-tItem->boundingRect().height());
     addItem(tItem);
+}
+
+void GameScene::drawFinalScore()
+{
+    QMap<QString, int> scoreMap = getScoreOfBoard(m_board);
+    int computerScore = scoreMap[m_computerTile];
+    int playerScore   = scoreMap[m_playerTile];
+    QString text;
+    if(computerScore > playerScore)
+    {
+        text = "You lost. The computer beat you by " + QString::number(computerScore-playerScore) + "points.";
+    }
+    else if(playerScore > computerScore)
+    {
+        text = "You beat the computer by " + QString::number(playerScore-computerScore) + " points! Congratulations!";
+    }
+    else
+    {
+        text = "The game was a tie!";
+    }
+
+    QGraphicsSimpleTextItem* resultItem = new QGraphicsSimpleTextItem();
+    resultItem->setText(text);
+    resultItem->setPen(GAME::TEXTCOLOR);
+    resultItem->setBrush(GAME::TEXTCOLOR);
+    resultItem->setFont(FontManager::Instance()->getFont(FontManager::FontID::FONT));
+    resultItem->setPos(SCREEN::HALF_WIDTH-resultItem->boundingRect().width()/2,
+                       SCREEN::HALF_HEIGHT-resultItem->boundingRect().height()/2);
+
+    QGraphicsRectItem* resultRectItem = new QGraphicsRectItem();
+    resultRectItem->setPos(resultItem->pos());
+    resultRectItem->setPen(QColor(GAME::TEXTBGCOLOR1));
+    resultRectItem->setBrush(QColor(GAME::TEXTBGCOLOR1));
+    resultRectItem->setRect(resultItem->boundingRect());
+
+    addItem(resultRectItem);
+    addItem(resultItem);
+
+    QGraphicsSimpleTextItem* gameAgainItem = new QGraphicsSimpleTextItem();
+    gameAgainItem->setText("Game Again");
+    gameAgainItem->setPen(GAME::TEXTCOLOR);
+    gameAgainItem->setBrush(GAME::TEXTCOLOR);
+    gameAgainItem->setFont(FontManager::Instance()->getFont(FontManager::FontID::BIGFONT));
+    gameAgainItem->setPos(SCREEN::HALF_WIDTH-gameAgainItem->boundingRect().width()/2,
+                       SCREEN::HALF_HEIGHT-gameAgainItem->boundingRect().height()/2+50);
+    QGraphicsRectItem* gameAgainRectItem = new QGraphicsRectItem();
+    gameAgainRectItem->setPos(gameAgainItem->pos());
+    gameAgainRectItem->setPen(QColor(GAME::TEXTBGCOLOR1));
+    gameAgainRectItem->setBrush(QColor(GAME::TEXTBGCOLOR1));
+    gameAgainRectItem->setRect(gameAgainItem->boundingRect());
+
+    addItem(gameAgainRectItem);
+    addItem(gameAgainItem);
+
+    QGraphicsSimpleTextItem* yesItem = new QGraphicsSimpleTextItem();
+    yesItem->setText("YES");
+    yesItem->setPen(GAME::TEXTCOLOR);
+    yesItem->setBrush(GAME::TEXTCOLOR);
+    yesItem->setFont(FontManager::Instance()->getFont(FontManager::FontID::BIGFONT));
+    yesItem->setPos(SCREEN::HALF_WIDTH-yesItem->boundingRect().width()/2 - 60,
+                       SCREEN::HALF_HEIGHT-yesItem->boundingRect().height()/2+10);
+    QGraphicsRectItem* yesRectItem = new QGraphicsRectItem();
+    yesRectItem->setPos(yesItem->pos());
+    yesRectItem->setPen(QColor(GAME::TEXTBGCOLOR1));
+    yesRectItem->setBrush(QColor(GAME::TEXTBGCOLOR1));
+    yesRectItem->setRect(yesItem->boundingRect());
+
+    addItem(yesRectItem);
+    addItem(yesItem);
+
+    QGraphicsSimpleTextItem* noItem = new QGraphicsSimpleTextItem();
+    noItem->setText("NO");
+    noItem->setPen(GAME::TEXTCOLOR);
+    noItem->setBrush(GAME::TEXTCOLOR);
+    noItem->setFont(FontManager::Instance()->getFont(FontManager::FontID::BIGFONT));
+    noItem->setPos(SCREEN::HALF_WIDTH-noItem->boundingRect().width()/2 + 90,
+                       SCREEN::HALF_HEIGHT-noItem->boundingRect().height()/2+120);
+    QGraphicsRectItem* noRectItem = new QGraphicsRectItem();
+    noRectItem->setPos(noItem->pos());
+    noRectItem->setPen(QColor(GAME::TEXTBGCOLOR1));
+    noRectItem->setBrush(QColor(GAME::TEXTBGCOLOR1));
+    noRectItem->setRect(noItem->boundingRect());
+
+    addItem(noRectItem);
+    addItem(noItem);
+
+    ///////////////////////YES///////////////////////
+    if( MouseStatus::s_releasedPoint.x() > yesItem->x() &&
+            MouseStatus::s_releasedPoint.x() < yesItem->x()+yesItem->boundingRect().width() &&
+            MouseStatus::s_releasedPoint.y() > yesItem->y() &&
+            MouseStatus::s_releasedPoint.y() < yesItem->y()+yesItem->boundingRect().height() )
+    {
+        newGame();
+    }
+
+    ///////////////////////NO///////////////////////
+    if( MouseStatus::s_releasedPoint.x() > noItem->x() &&
+            MouseStatus::s_releasedPoint.x() < noItem->x()+noItem->boundingRect().width() &&
+            MouseStatus::s_releasedPoint.y() > noItem->y() &&
+            MouseStatus::s_releasedPoint.y() < noItem->y()+noItem->boundingRect().height() )
+    {
+        quitGame();
+    }
 }
 
 void GameScene::resetBoard()
@@ -714,6 +842,18 @@ QMap<QString, int> GameScene::getScoreOfBoard(QString dupeBoard[GAME::BOARDWIDTH
     retVal[GAME::WHITE_TILE] = xscore;
     retVal[GAME::BLACK_TILE] = oscore;
     return retVal;
+}
+
+void GameScene::newGame()
+{
+    m_mode = GameMode::Turn;
+    m_showHints = false;
+    resetBoard();
+}
+
+void GameScene::quitGame()
+{
+    QApplication::instance()->quit();
 }
 
 void GameScene::keyPressEvent(QKeyEvent *event)

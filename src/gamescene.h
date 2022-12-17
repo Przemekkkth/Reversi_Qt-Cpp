@@ -49,6 +49,7 @@ private:
     void drawBoard();
     void drawNewGameAndHintText();
     void drawInfo();
+    void drawFinalScore();
     void resetBoard();
     bool isOnBoard(int x, int y);
     QPoint translateBoardToPixelCoord(int x, int y);
@@ -66,6 +67,8 @@ private:
     bool isOnCorner(int x, int y);
     QPoint getComputerMove(QString computerTile);
     QMap<QString, int> getScoreOfBoard(QString dupeBoard[GAME::BOARDWIDTH][GAME::BOARDHEIGHT]);
+    void newGame();
+    void quitGame();
 
     QPixmap m_bgPixmap, m_boardPixmap;
     QString m_board[GAME::BOARDWIDTH][GAME::BOARDHEIGHT];
