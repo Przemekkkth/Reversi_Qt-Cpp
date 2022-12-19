@@ -24,8 +24,6 @@ GameScene::GameScene(QObject *parent)
       m_showHints(false)
 {
     m_bgPixmap    = PixmapManager::Instance()->getPixmap(PixmapManager::TextureID::BG).scaled(SCREEN::PHYSICAL_SIZE, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
-    m_boardPixmap = PixmapManager::Instance()->getPixmap(PixmapManager::TextureID::Board).scaled(GAME::BOARDWIDTH *
-                                                                                                 GAME::SPACESIZE, GAME::BOARDHEIGHT * GAME::SPACESIZE);
 
     resetBoard();
 
@@ -159,15 +157,31 @@ void GameScene::drawBG()
     QGraphicsPixmapItem* bgItem = new QGraphicsPixmapItem();
     bgItem->setPixmap(m_bgPixmap);
     addItem(bgItem);
-
-    QGraphicsPixmapItem* boardItem = new QGraphicsPixmapItem();
-    boardItem->setPos(GAME::XMARGIN, GAME::YMARGIN);
-    boardItem->setPixmap(m_boardPixmap);
-    addItem(boardItem);
 }
 
 void GameScene::drawBoard()
 {
+    for(int x = 0; x < (GAME::BOARDWIDTH); ++x)
+    {
+        for(int y = 0; y < (GAME::BOARDHEIGHT); ++y)
+        {
+            QGraphicsRectItem* rItem = new QGraphicsRectItem();
+            rItem->setPos((x * GAME::SPACESIZE) + GAME::XMARGIN, (y * GAME::SPACESIZE) + GAME::YMARGIN);
+            rItem->setRect(0,0, GAME::SPACESIZE, GAME::SPACESIZE);
+            if((x+y)%2)
+            {
+                rItem->setPen(GAME::LIGHT_GREEN);
+                rItem->setBrush(GAME::LIGHT_GREEN);
+            }
+            else
+            {
+                rItem->setPen(GAME::DARK_GREEN);
+                rItem->setBrush(GAME::DARK_GREEN);
+            }
+            addItem(rItem);
+        }
+    }
+
     for(int x = 0; x < (GAME::BOARDWIDTH+1); ++x)
     {
         int startx = (x * GAME::SPACESIZE) + GAME::XMARGIN;

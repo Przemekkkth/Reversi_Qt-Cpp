@@ -70,7 +70,7 @@ private:
     void newGame();
     void quitGame();
 
-    QPixmap m_bgPixmap, m_boardPixmap;
+    QPixmap m_bgPixmap;
     QString m_board[GAME::BOARDWIDTH][GAME::BOARDHEIGHT];
     QString m_playerTile, m_computerTile;
     QString m_turn;

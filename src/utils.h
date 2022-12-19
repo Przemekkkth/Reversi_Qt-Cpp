@@ -132,6 +132,8 @@ namespace GAME
     static constexpr const QColor BLACK               = QColor(0  ,   0,   0);
     static constexpr const QColor GREEN               = QColor(  0, 155,   0);
     static constexpr const QColor BROWN               = QColor(174,  94,   0);
+    static constexpr const QColor LIGHT_GREEN         = QColor(0,    138,  0);
+    static constexpr const QColor DARK_GREEN          = QColor(0,    130,  0);
 
     static constexpr const QColor TEXTBGCOLOR1           = BRIGHTBLUE;
     static constexpr const QColor TEXTBGCOLOR2           = GREEN;
