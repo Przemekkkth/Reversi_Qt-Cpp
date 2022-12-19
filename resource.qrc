@@ -1,7 +1,6 @@
 <RCC>
     <qresource prefix="/">
         <file>res/sprite/flippybackground.png</file>
-        <file>res/sprite/flippyboard.png</file>
         <file>res/font/freesansbold.ttf</file>
         <file>res/sprite/black.png</file>
         <file>res/sprite/hint.png</file>
