@@ -18,6 +18,9 @@ QPixmap& PixmapManager::getPixmap(TextureID id)
 
 PixmapManager::PixmapManager()
 {
-    m_textures.load(TextureID::BG, ":/res/sprite/flippybackground.png");
+    m_textures.load(TextureID::BG,    ":/res/sprite/flippybackground.png");
     m_textures.load(TextureID::Board, ":/res/sprite/flippyboard.png");
+    m_textures.load(TextureID::Black, ":/res/sprite/black.png");
+    m_textures.load(TextureID::White, ":/res/sprite/white.png");
+    m_textures.load(TextureID::Hint,  ":/res/sprite/hint.png");
 }

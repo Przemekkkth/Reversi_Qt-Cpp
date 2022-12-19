@@ -200,23 +200,23 @@ void GameScene::drawBoard()
             if(m_board[x][y] == GAME::WHITE_TILE || m_board[x][y] == GAME::BLACK_TILE)
             {
                 QColor tileColor;
+                QPixmap pixmap;
+                int offset = 8;
 
                 if(m_board[x][y] == GAME::WHITE_TILE)
                 {
                     tileColor = GAME::WHITE;
+                    pixmap = PixmapManager::Instance()->getPixmap(PixmapManager::TextureID::White).scaled((int(GAME::SPACESIZE)-offset/2), (int(GAME::SPACESIZE)-offset/2));
                 }
                 else
                 {
                     tileColor = GAME::BLACK;
+                    pixmap = PixmapManager::Instance()->getPixmap(PixmapManager::TextureID::Black).scaled((int(GAME::SPACESIZE)-offset/2), (int(GAME::SPACESIZE)-offset/2));
                 }
-                QGraphicsEllipseItem* eItem = new QGraphicsEllipseItem();
-                eItem->setPen(QColor(tileColor));
-                eItem->setBrush(QColor(tileColor));
-                int offset = 8;
-                eItem->setRect(-(int(GAME::SPACESIZE)-offset)/2,-(int(GAME::SPACESIZE)-offset)/2 , int(GAME::SPACESIZE)-offset, int(GAME::SPACESIZE)-offset);
-                eItem->setPos(center.x(), center.y());
-                addItem(eItem);
-
+                QGraphicsPixmapItem* pItem = new QGraphicsPixmapItem;
+                pItem->setPixmap(pixmap);
+                pItem->setPos(center.x() - (int(GAME::SPACESIZE)-offset/2)/2, center.y() - (int(GAME::SPACESIZE)-offset/2)/2);
+                addItem(pItem);
             }
             if(m_board[x][y] == GAME::HINT_TILE)
             {
@@ -227,6 +227,11 @@ void GameScene::drawBoard()
                 rItem->setRect(-offset/2, -offset/2, offset, offset);
                 rItem->setPos(center.x(), center.y());
                 addItem(rItem);
+
+                QGraphicsPixmapItem* pItem = new QGraphicsPixmapItem();
+                pItem->setPos(center.x() - (GAME::SPACESIZE-offset/2)/2, center.y() - (GAME::SPACESIZE-offset/2)/2);
+                pItem->setPixmap(PixmapManager::Instance()->getPixmap(PixmapManager::TextureID::Hint).scaled(GAME::SPACESIZE-offset/2, GAME::SPACESIZE-offset/2));
+                addItem(pItem);
             }
         }
     }

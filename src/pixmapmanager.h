@@ -7,7 +7,7 @@ class PixmapManager
 {
 public:
     enum class TextureID{
-        BG, Board
+        BG, Board, Black, White, Hint
     };
     static PixmapManager* Instance();
     QPixmap& getPixmap(TextureID id);
