@@ -374,7 +374,7 @@ void GameScene::drawFinalScore()
     yesItem->setBrush(GAME::TEXTCOLOR);
     yesItem->setFont(FontManager::Instance()->getFont(FontManager::FontID::BIGFONT));
     yesItem->setPos(SCREEN::HALF_WIDTH-yesItem->boundingRect().width()/2 - 60,
-                       SCREEN::HALF_HEIGHT-yesItem->boundingRect().height()/2+10);
+                       SCREEN::HALF_HEIGHT-yesItem->boundingRect().height()/2+120);
     QGraphicsRectItem* yesRectItem = new QGraphicsRectItem();
     yesRectItem->setPos(yesItem->pos());
     yesRectItem->setPen(QColor(GAME::TEXTBGCOLOR1));
