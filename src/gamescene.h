@@ -69,6 +69,7 @@ private:
     QMap<QString, int> getScoreOfBoard(QString dupeBoard[GAME::BOARDWIDTH][GAME::BOARDHEIGHT]);
     void newGame();
     void quitGame();
+    void renderGameScene();
 
     QPixmap m_bgPixmap;
     QString m_board[GAME::BOARDWIDTH][GAME::BOARDHEIGHT];

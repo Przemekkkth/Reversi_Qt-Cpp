@@ -141,6 +141,10 @@ void GameScene::loop()
 
 void GameScene::handlePlayerInput()
 {
+    if(m_keys[KEYBOARD::KEY_Z]->m_released)
+    {
+        //renderGameScene();
+    }
 }
 
 void GameScene::resetStatus()
@@ -873,6 +877,19 @@ void GameScene::newGame()
 void GameScene::quitGame()
 {
     QApplication::instance()->quit();
+}
+
+void GameScene::renderGameScene()
+{
+    static int index = 0;
+    QString fileName = QDir::currentPath() + QDir::separator() + "screen" + QString::number(index++) + ".png";
+    QRect rect = sceneRect().toAlignedRect();
+    QImage image(rect.size(), QImage::Format_ARGB32);
+    image.fill(Qt::transparent);
+    QPainter painter(&image);
+    render(&painter);
+    image.save(fileName);
+    qDebug() << "saved " << fileName;
 }
 
 void GameScene::keyPressEvent(QKeyEvent *event)
