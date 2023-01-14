@@ -19,3 +19,4 @@ qmake && make
 * [Qt](https://www.qt.io/) - Cross-Platform software for embedded & desktop
 * [Original](https://inventwithpython.com/pygame/chapter10.html) - source code(Pygame) and explanations
 * [yt](https://youtu.be/HDi6iOZ9emo) - gameplay
+* [Play online](https://przemekkkth.github.io/reversi/index.html) - game hosted on GitHub
